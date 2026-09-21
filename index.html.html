@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Procurement Intelligence — Edenred</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --red:#F72717; --red-dark:#C81E12; --red-050:#FEECEA; --magenta:#FF007D;
+  --ink:#14171C; --ink-2:#2B3038; --gray-700:#4B5563; --gray-500:#6B7280;
+  --gray-300:#D8DCE3; --gray-200:#E7E9EE; --gray-100:#F2F3F6; --gray-050:#F8F9FB;
+  --surface:#FFFFFF; --bg:#F5F6F9;
+  --success:#12805C; --success-bg:#E4F5EE;
+  --warning:#B45B04; --warning-bg:#FDEEDA;
+  --danger:#C81E12; --danger-bg:#FCE7E5;
+  --info:#0A6E94; --info-bg:#E4F3F8;
+  --radius:12px; --radius-sm:8px;
+  --shadow:0 1px 2px rgba(20,23,28,.04), 0 4px 16px rgba(20,23,28,.05);
+  --sidebar-w:236px;
+  /* tokens fixos que não devem inverter entre temas (sidebar, avatares, hero) */
+  --sidebar-bg:#14171C; --sidebar-item-hover:#22262F; --sidebar-border:#262A33;
+  --sidebar-text:#FFFFFF; --sidebar-text-dim:#9AA0AE; --sidebar-text-2:#C6CAD3;
+  --hero-a:#14171C; --hero-b:#20242D;
+}
+[data-theme="dark"]{
+  /* All Black Piano — preto piano com hierarquia por superfície, não por cinza */
+  --ink:#F5F5F5; --ink-2:#E3E3E3; --gray-700:#B8B8B8; --gray-500:#8C8C8C;
+  --gray-300:#242424; --gray-200:#1C1C1C; --gray-100:#141414; --gray-050:#0E0E0E;
+  --surface:#0D0D0D; --bg:#050505;
+  --success-bg:#0F2A21; --warning-bg:#2E2109; --danger-bg:#301210; --info-bg:#0C222B;
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 10px 28px rgba(0,0,0,.55);
+  --sidebar-bg:#050505; --sidebar-item-hover:#141414; --sidebar-border:#1A1A1A;
+  --hero-a:#0B0B0B; --hero-b:#151515;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--ink);
+  -webkit-font-smoothing:antialiased; font-size:14px; line-height:1.5;
+}
+.num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum";}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer;}
+
+/* ---------- Shell ---------- */
+.shell{display:flex; min-height:100vh;}
+.sidebar{
+  width:var(--sidebar-w); flex-shrink:0; background:var(--sidebar-bg); color:var(--sidebar-text);
+  display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto;
+  border-right:1px solid var(--sidebar-border); transition:background .2s;
+}
+.sidebar-brand{padding:22px 20px 16px; display:flex; align-items:center; gap:10px;}
+.brand-mark{width:30px; height:30px; border-radius:8px; background:linear-gradient(135deg,var(--red),var(--magenta)); flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; color:#fff;}
+.brand-text{line-height:1.2;}
+.brand-text .t1{font-weight:700; font-size:14.5px; color:#fff;}
+.brand-text .t2{font-size:11px; color:#9AA0AE; letter-spacing:.2px;}
+.sidebar-nav{padding:6px 12px; flex:1;}
+.nav-group-label{font-size:11px; color:#6C7280; padding:16px 10px 6px; font-weight:600;}
+.nav-item{
+  display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; color:#C6CAD3;
+  font-size:13.5px; font-weight:500; margin-bottom:2px; cursor:pointer; transition:background .12s;
+}
+.nav-item:hover{background:var(--sidebar-item-hover); color:#fff;}
+.nav-item.active{background:var(--sidebar-item-hover); color:#fff; position:relative;}
+.nav-item.active::before{content:""; position:absolute; left:-12px; top:8px; bottom:8px; width:3px; background:var(--red); border-radius:2px;}
+.nav-ico{width:17px; text-align:center; opacity:.9; font-size:14px;}
+.nav-badge{margin-left:auto; font-size:10px; background:#33384333; color:#9AA0AE; padding:1px 6px; border-radius:20px;}
+.sidebar-foot{padding:14px 20px 18px; border-top:1px solid var(--sidebar-border); font-size:11.5px; color:var(--sidebar-text-dim);}
+.sidebar-foot b{color:#C6CAD3;}
+
+.main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{
+  position:sticky; top:0; z-index:5; background:var(--surface); border-bottom:1px solid var(--gray-200);
+  padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+}
+.topbar-left h1{font-size:18px; margin:0; font-weight:700;}
+.topbar-left .sub{font-size:12.5px; color:var(--gray-500); margin-top:2px;}
+.topbar-right{display:flex; align-items:center; gap:10px;}
+.select{
+  background:var(--gray-050); border:1px solid var(--gray-200); border-radius:8px; padding:7px 10px;
+  font-size:12.5px; color:var(--ink-2); font-family:inherit; font-weight:500;
+}
+.icon-btn{width:32px; height:32px; border-radius:8px; border:1px solid var(--gray-200); background:var(--surface); display:flex; align-items:center; justify-content:center; font-size:14px;}
+.mock-pill{
+  display:inline-flex; align-items:center; gap:6px; background:var(--warning-bg); color:var(--warning);
+  font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; border:1px solid #F0D9AE55;
+}
+.content{padding:24px 28px 60px; max-width:1400px; width:100%; margin:0 auto;}
+
+/* ---------- Filters row ---------- */
+.filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;}
+.filters-bar{display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin-bottom:18px; padding:14px; background:var(--surface); border:1px solid var(--gray-200); border-radius:var(--radius);}
+.filter-field{display:flex; flex-direction:column; gap:5px; min-width:145px; flex:1;}
+.filter-field label{font-size:10.5px; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:.04em;}
+.filter-field .select{width:100%;}
+.icon{width:16px; height:16px; stroke-width:2; vertical-align:-3px;}
+.kpi-head{display:flex; align-items:center; gap:8px; color:var(--gray-500);}
+.kpi-head .icon{color:var(--red);}
+.panel-head.centered,.panel-head.centered>div{justify-content:center; text-align:center; width:100%;}
+.panel>.panel-title{text-align:center;}
+.kraljic-legend{display:flex; flex-wrap:wrap; justify-content:center; gap:10px 18px; margin:0 0 10px; font-size:11px; color:var(--gray-500);}
+.kraljic-legend span{display:inline-flex; align-items:center; gap:5px;}
+.kraljic-legend i{width:8px; height:8px; border-radius:50%; display:inline-block;}
+.drawer-backdrop{position:fixed; inset:0; background:rgba(10,12,16,.42); z-index:20; display:flex; justify-content:flex-end;}
+.drawer{width:min(620px,100%); height:100%; overflow:auto; background:var(--surface); padding:24px; box-shadow:-12px 0 30px rgba(0,0,0,.18);}
+.drawer-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:18px;}
+.drawer-title{font-size:18px; font-weight:800;}
+.drawer-close{border:1px solid var(--gray-200); background:var(--surface); border-radius:8px; width:32px; height:32px; display:grid; place-items:center;}
+.assessment-grid{display:grid; grid-template-columns:1fr 110px; gap:8px 12px; align-items:center;}
+.assessment-grid label{font-size:12px; color:var(--gray-700);}
+@media (max-width:760px){.filter-field{min-width:130px;}.drawer{padding:18px;}.kpis{grid-template-columns:1fr 1fr;}}
+
+/* ---------- Grid / Cards ---------- */
+.grid{display:grid; gap:14px;}
+.kpis{grid-template-columns:repeat(6,1fr);}
+.card{background:var(--surface); border:1px solid var(--gray-200); border-radius:var(--radius); box-shadow:var(--shadow);}
+.kpi-card{padding:16px 16px 14px;}
+.kpi-label{font-size:12px; color:var(--gray-500); font-weight:500; margin-bottom:8px;}
+.kpi-value{font-size:22px; font-weight:800; letter-spacing:-.3px;}
+.kpi-card .kpi-value{margin-top:2px;}
+.panel{padding:18px 20px;}
+.panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:10px; flex-wrap:wrap;}
+.panel-title{font-size:14.5px; font-weight:700;}
+.panel-sub{font-size:12px; color:var(--gray-500); margin-top:2px;}
+.seg{display:flex; background:var(--gray-100); border-radius:8px; padding:2px; gap:2px;}
+.seg button{border:none; background:transparent; padding:5px 11px; border-radius:6px; font-size:12px; font-weight:600; color:var(--gray-500);}
+.seg button.active{background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.08);}
+
+/* ---------- Tables ---------- */
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th{
+  text-align:left; font-size:11.5px; font-weight:600; color:var(--gray-500); padding:8px 10px;
+  border-bottom:1px solid var(--gray-200); cursor:pointer; user-select:none; white-space:nowrap;
+}
+th.sorted{color:var(--ink);}
+th .arrow{font-size:9px; margin-left:3px; opacity:.6;}
+td{padding:10px; border-bottom:1px solid var(--gray-100); vertical-align:middle;}
+tr.clickable:hover{background:var(--gray-050); cursor:pointer;}
+.tbl-wrap{overflow-x:auto;}
+.name-cell{display:flex; align-items:center; gap:9px; font-weight:600;}
+.avatar{width:26px; height:26px; border-radius:7px; background:var(--gray-100); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--gray-700); flex-shrink:0;}
+.avatar img,.entity-avatar img,.supplier-logo-preview img{width:100%;height:100%;object-fit:contain;border-radius:inherit;}
+.supplier-logo-preview{width:72px;height:72px;border-radius:12px;background:var(--gray-100);display:grid;place-items:center;color:var(--gray-500);overflow:hidden;flex-shrink:0;}
+.logo-upload{display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200);}
+.logo-upload input{font-size:12px;max-width:240px;}
+
+.badge{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px;}
+.badge.green{background:var(--success-bg); color:var(--success);}
+.badge.amber{background:var(--warning-bg); color:var(--warning);}
+.badge.red{background:var(--danger-bg); color:var(--danger);}
+.badge.blue{background:var(--info-bg); color:var(--info);}
+.badge.gray{background:var(--gray-100); color:var(--gray-500);}
+.dot{width:7px; height:7px; border-radius:50%; display:inline-block;}
+.dot.green{background:var(--success);} .dot.amber{background:var(--warning);} .dot.red{background:var(--danger);} .dot.blue{background:var(--info);} .dot.gray{background:var(--gray-500);}
+
+/* ---------- Layout helpers ---------- */
+.row2{display:grid; grid-template-columns:2fr 1fr; gap:14px;}
+.row-equal{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.stack{display:flex; flex-direction:column; gap:14px;}
+.chart-box{position:relative;}
+.chart-box canvas{max-height:100%;}
+
+/* ---------- Alerts / insights ---------- */
+.alert-item{display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--gray-100);}
+.alert-item:last-child{border-bottom:none;}
+.alert-ico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.alert-text{font-size:12.5px; line-height:1.4;}
+.alert-text b{font-weight:600;}
+.alert-time{font-size:11px; color:var(--gray-500); margin-top:2px;}
+.insight-item{font-size:12.5px; padding:9px 0; border-bottom:1px solid var(--gray-100); display:flex; gap:8px;}
+.insight-item:last-child{border-bottom:none;}
+
+/* ---------- Category cards (premium, sempre "black piano", independente do tema) ---------- */
+.cat-card{
+  position:relative; overflow:hidden; border-radius:16px; padding:24px 24px 20px; color:#fff;
+  background:radial-gradient(130% 160% at 0% 0%, #1B1B1B 0%, #0C0C0C 55%, #050505 100%);
+  border:1px solid #1D1D1D; cursor:pointer;
+  box-shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 12px 28px rgba(0,0,0,.35);
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.cat-card::after{
+  content:""; position:absolute; inset:0; border-radius:16px; padding:1px;
+  background:linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,0) 40%);
+  mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none;
+}
+.cat-card.featured{border-color:#3A1512;}
+.cat-card.featured .cat-topline{position:absolute; left:0; top:0; right:0; height:3px; background:linear-gradient(90deg,var(--red),#7A0F09);}
+.cat-card:hover{transform:translateY(-4px); box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 20px 44px rgba(0,0,0,.5); border-color:#2C2C2C;}
+.cat-card.disabled{cursor:not-allowed; opacity:.55;}
+.cat-card.disabled:hover{transform:none; box-shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 12px 28px rgba(0,0,0,.35); border-color:#1D1D1D;}
+.cat-icon{
+  width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  background:rgba(247,39,23,.13); color:#FF6A5A; font-size:16px; border:1px solid rgba(247,39,23,.28); margin-bottom:16px;
+}
+.cat-head{display:flex; align-items:flex-start; justify-content:space-between; gap:10px;}
+.cat-name{font-size:16.5px; font-weight:700; letter-spacing:-.2px;}
+.cat-desc{font-size:12px; color:#999; margin-top:5px; max-width:280px; line-height:1.55;}
+.cat-status-pill{font-size:10.5px; font-weight:700; padding:4px 10px; border-radius:20px; white-space:nowrap; flex-shrink:0;}
+.cat-status-pill.on{background:rgba(247,39,23,.16); color:#FF6A5A; border:1px solid rgba(247,39,23,.3);}
+.cat-status-pill.off{background:rgba(255,255,255,.06); color:#9A9A9A; border:1px solid rgba(255,255,255,.08);}
+.cat-metrics-primary{display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:22px; padding-top:18px; border-top:1px solid #191919;}
+.cat-metrics-secondary{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:14px;}
+.cat-metric-label{font-size:10.5px; color:#777; font-weight:500;}
+.cat-metric-value{font-size:20px; font-weight:800; margin-top:3px; letter-spacing:-.3px;}
+.cat-metric-value.sm{font-size:14.5px;}
+.cat-metric-value.accent{color:#FF6A5A;}
+.cat-grid{grid-template-columns:repeat(2,1fr);}
+@media (max-width:760px){ .cat-grid{grid-template-columns:1fr;} }
+
+/* ---------- Detail header ---------- */
+.detail-head{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap;}
+.back-link{font-size:12.5px; color:var(--gray-500); font-weight:600; display:inline-flex; align-items:center; gap:5px; margin-bottom:10px;}
+.back-link:hover{color:var(--ink);}
+.entity-title{display:flex; align-items:center; gap:12px;}
+.entity-avatar{width:44px; height:44px; border-radius:10px; background:var(--hero-a); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px;}
+.entity-name{font-size:20px; font-weight:800;}
+.entity-meta{font-size:12.5px; color:var(--gray-500); margin-top:3px;}
+
+.score-ring{width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative;}
+.score-ring .n{font-size:16px; font-weight:800;}
+
+.mini-kpis{grid-template-columns:repeat(4,1fr);}
+
+/* ---------- Timeline (contratos) ---------- */
+.timeline-track{position:relative; height:64px; margin:26px 4px 8px;}
+.timeline-line{position:absolute; top:28px; left:0; right:0; height:2px; background:var(--gray-200);}
+.timeline-tick{position:absolute; top:0; transform:translateX(-50%); text-align:center; width:70px;}
+.timeline-tick .lbl{font-size:10.5px; color:var(--gray-500); margin-top:36px;}
+.timeline-tick .pt{width:8px; height:8px; border-radius:50%; background:var(--gray-300); margin:22px auto 0;}
+.contract-dot{position:absolute; top:22px; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%); border:2px solid var(--surface); cursor:pointer;}
+
+/* ---------- Kraljic bubble ---------- */
+.kraljic-wrap{position:relative;}
+.kraljic-quad-label{position:absolute; font-size:11px; font-weight:700; color:var(--gray-300); text-transform:none;}
+
+/* ---------- Misc ---------- */
+.pill-status{font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px;}
+.empty-state{padding:60px 20px; text-align:center; color:var(--gray-500);}
+.empty-state .e-ico{font-size:26px; margin-bottom:8px;}
+.footer-note{font-size:11.5px; color:var(--gray-500); text-align:center; padding:24px 0 8px;}
+.hidden{display:none !important;}
+.small-muted{font-size:11.5px; color:var(--gray-500);}
+.section-title{font-size:13px; font-weight:700; margin:22px 0 10px;}
+.two-col-list{display:grid; grid-template-columns:1fr 1fr; gap:8px 24px;}
+.kv{display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--gray-100); font-size:12.5px;}
+.kv .k{color:var(--gray-500);}
+.kv .v{font-weight:600;}
+
+.weights-row{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--gray-100); font-size:12.5px;}
+.weights-row .lbl{width:150px; color:var(--gray-700);}
+.weights-row input[type=range]{flex:1; accent-color:var(--red);}
+.weights-row .wv{width:34px; text-align:right; font-weight:700;}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1180px){
+  .kpis{grid-template-columns:repeat(3,1fr);}
+  .row2{grid-template-columns:1fr;}
+  .row-equal{grid-template-columns:1fr;}
+  .cat-metrics-secondary{grid-template-columns:repeat(3,1fr);}
+}
+@media (max-width: 860px){
+  .sidebar{position:fixed; z-index:50; transform:translateX(-100%); transition:transform .2s; box-shadow:0 0 0 9999px rgba(0,0,0,.35);}
+  .sidebar.open{transform:translateX(0);}
+  .menu-btn{display:flex !important;}
+  .kpis{grid-template-columns:repeat(2,1fr);}
+  .mini-kpis{grid-template-columns:repeat(2,1fr);}
+  .content{padding:16px;}
+  .topbar{padding:12px 16px;}
+}
+.menu-btn{display:none;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">PI</div>
+      <div class="brand-text">
+        <div class="t1">Procurement Intelligence</div>
+        <div class="t2">Edenred · Carteira Operações</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="navList"></nav>
+    <div class="sidebar-foot">
+      <b>Dados da planilha pública</b><br>Fonte oficial sincronizada automaticamente.
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="icon-btn menu-btn" aria-label="Abrir navegação" onclick="document.getElementById('sidebar').classList.toggle('open')"><i data-lucide="menu" class="icon" aria-hidden="true"></i></button>
+          <div>
+            <h1 id="pageTitle">Dashboard</h1>
+            <div class="sub" id="pageSub">Visão geral da carteira de Operações</div>
+          </div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span id="dataSourceBadge" class="mock-pill" style="background:var(--info-bg); color:var(--info); border-color:rgba(10,110,148,.2);">● carregando dados</span>
+        <button class="select" id="refreshDataBtn" type="button" onclick="loadData({manual:true})" style="padding:7px 12px;">Atualizar dados</button>
+        <button class="icon-btn" title="Alternar tema" aria-label="Alternar tema" onclick="toggleTheme()"><i data-lucide="contrast" class="icon" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="content" id="content"></main>
+    <div class="footer-note" id="lastUpdateFooter">Última atualização: --</div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+  DATA LAYER — fonte oficial publicada no Google Sheets
+  ============================================================
+   ============================================================ */
+/* Polyfill defensivo: em alguns ambientes sandboxed (webviews/iframes restritos) o
+   ResizeObserver nativo não existe. O Chart.js usa essa API internamente quando
+   responsive:true, e sem ela a criação do gráfico lança exceção silenciosa e o
+   canvas fica vazio. Este polyfill garante que os gráficos sempre renderizem. */
+if(typeof window.ResizeObserver === 'undefined'){
+  window.ResizeObserver = class {
+    constructor(cb){ this.cb=cb; this.els=new Set(); this._last=new Map(); this._loop(); }
+    observe(el){ this.els.add(el); }
+    unobserve(el){ this.els.delete(el); this._last.delete(el); }
+    disconnect(){ this.els.clear(); this._last.clear(); if(this._raf) cancelAnimationFrame(this._raf); }
+    _loop(){
+      this._raf = requestAnimationFrame(()=>{
+        const entries=[];
+        this.els.forEach(el=>{
+          const r = el.getBoundingClientRect();
+          const prev = this._last.get(el);
+          if(!prev || prev.width!==r.width || prev.height!==r.height){
+            this._last.set(el,{width:r.width,height:r.height});
+            entries.push({target:el, contentRect:r});
+          }
+        });
+        if(entries.length) this.cb(entries, this);
+        this._loop();
+      });
+    }
+  };
+}
+
+const DATA_SOURCE_CONFIG = {
+  spreadsheetId: '2PACX-1vTmbxMEO249keBcTaC_qEMknlLLiq4VPtGacCKl7LVcqgGj4bH6ujtYlIHskGUzq8gbt3sQnS3Zt_bl',
+  publishedCsvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTmbxMEO249keBcTaC_qEMknlLLiq4VPtGacCKl7LVcqgGj4bH6ujtYlIHskGUzq8gbt3sQnS3Zt_bl/pub?output=csv',
+  sheetName: 'BASE_DASHBOARD',
+  sheetGid: '1705110151',
+  refreshIntervalMs: 5 * 60 * 1000,
+  allowLocalFallback: false,
+  localFallbackPath: 'data/base.json',
+};
+
+const APP_STATE = {
+  hasLoaded: false,
+  loading: false,
+  lastSuccessfulLoad: null,
+  lastError: null,
+  data: [],
+  records: [],
+};
+
+const TODAY = new Date();
+
+let CATEGORIES = [];
+let SUPPLIERS = [];
+let CONTRACTS = [];
+let PURCHASES = [];
+let MONTHLY = [];
+let TOTAL_SPEND = 0;
+let TOTAL_SAVING = 0;
+let ALERTS = [];
+
+function addDays(d, n){ const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function fmtDate(d){ if (!d) return '--'; const date = d instanceof Date ? d : new Date(d); return date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'}); }
+function fmtMoney(v){
+  const value = Number(v) || 0;
+  if (Math.abs(value) >= 1000000) return 'R$ ' + (value / 1000000).toLocaleString('pt-BR', {maximumFractionDigits: 1, minimumFractionDigits: 1}) + 'M';
+  if (Math.abs(value) >= 1000) return 'R$ ' + (value / 1000).toLocaleString('pt-BR', {maximumFractionDigits: 0}) + 'K';
+  return 'R$ ' + value.toLocaleString('pt-BR');
+}
+function fmtMoneyFull(v){ const value = Number(v) || 0; return 'R$ ' + value.toLocaleString('pt-BR', {maximumFractionDigits: 0}); }
+function fmtPct(v){ const value = Number(v) || 0; return value.toLocaleString('pt-BR', {maximumFractionDigits: 1}) + '%'; }
+function daysBetween(a, b){ return Math.round((new Date(b) - new Date(a)) / (1000 * 60 * 60 * 24)); }
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function hexToRgba(hex, alpha){
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function normalizeText(value){
+  return String(value ?? '').trim().replace(/\s+/g, ' ');
+}
+function normalizeKey(value){
+  return normalizeText(value)
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function parseNumber(value){
+  if (value === null || value === undefined || value === '') return 0;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  const str = String(value).trim();
+  if (!str) return 0;
+  const cleaned = str.replace(/\./g, '').replace(',', '.').replace(/[^0-9,.-]/g, '');
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+function parseDate(value){
+  if (!value) return null;
+  const str = String(value).trim();
+  if (!str) return null;
+  const date = new Date(str);
+  if (Number.isNaN(date.getTime())) {
+    const [d, m, y] = str.split('/');
+    if (d && m && y) return new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`);
+  }
+  return date;
+}
+function slugify(value){
+  return normalizeText(value || 'sem-nome').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'sem-nome';
+}
+function classify(s){
+  const highImp = Number(s.impacto || 0) >= 3.5;
+  const highCrit = Number(s.criticidade || 0) >= 3.5;
+  if (highImp && highCrit) return 'Estratégico';
+  if (!highImp && highCrit) return 'Gargalo';
+  if (highImp && !highCrit) return 'Alavancagem';
+  return 'Não crítico';
+}
+function classColor(c){
+  return {'Estratégico': 'red', 'Gargalo': 'amber', 'Alavancagem': 'blue', 'Não crítico': 'gray'}[c];
+}
+function computeScore(s, w){
+  w = w || {financeiro: 25, dependencia: 20, substituibilidade: 15, risco: 15, performance: 15, concentracao: 10};
+  const maxSpend = Math.max(1, ...SUPPLIERS.map(x => Number(x.spend || 0)));
+  const financeiro = ((Number(s.spend || 0) / maxSpend) * 100);
+  const dependencia = ((Number(s.criticidade || 0) / 5) * 100);
+  const substituibilidade = ((Number(s.criticidade || 0) / 5) * 100);
+  const risco = ((Number(s.criticidade || 0) / 5) * 70) + ((1 - (Number(s.impacto || 0) / 5)) * 30);
+  const performance = 100 - ((Number(s.criticidade || 0) * 4));
+  const concentracao = ((Number(s.spend || 0) / Math.max(1, TOTAL_SPEND || 1)) * 100) * 2.2;
+  const total = (financeiro * w.financeiro + dependencia * w.dependencia + substituibilidade * w.substituibilidade +
+                 risco * w.risco + performance * w.performance + Math.min(100, concentracao) * w.concentracao) / 100;
+  return Math.max(10, Math.min(98, Math.round(total)));
+}
+function riskLevel(score){
+  if(score >= 75) return {label: 'Crítico', color: 'red'};
+  if(score >= 55) return {label: 'Alto', color: 'amber'};
+  if(score >= 35) return {label: 'Atenção', color: 'blue'};
+  return {label: 'Baixo risco', color: 'green'};
+}
+function daysToExpire(c){ return daysBetween(new Date(), c.end); }
+function expireBucket(days){
+  if(days < 0) return {label: 'Vencido', color: 'red'};
+  if(days < 30) return {label: '< 30 dias', color: 'red'};
+  if(days < 90) return {label: '30–90 dias', color: 'amber'};
+  if(days < 180) return {label: '90–180 dias', color: 'blue'};
+  return {label: '> 180 dias', color: 'green'};
+}
+function monthKey(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function monthLabel(d){ return d.toLocaleDateString('pt-BR', {month: 'short'}).replace('.', ''); }
+function last12Months(){
+  const arr = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(TODAY.getFullYear(), TODAY.getMonth() - i, 1);
+    arr.push(d);
+  }
+  return arr;
+}
+function buildInsights(){
+  if (!SUPPLIERS.length) return ['A base ainda está sendo carregada.'];
+  const topSup = [...SUPPLIERS].sort((a, b) => Number(b.spend || 0) - Number(a.spend || 0))[0];
+  const expiring60 = CONTRACTS.filter(c => { const d = daysToExpire(c); return d >= 0 && d < 60; }).length;
+  const avgSavingPct = TOTAL_SPEND > 0 ? (TOTAL_SAVING / TOTAL_SPEND) * 100 : 0;
+  const last3 = MONTHLY.slice(-3).reduce((a, m) => a + Number(m.pct || 0), 0) / Math.max(1, MONTHLY.slice(-3).length);
+  const vsAvg = avgSavingPct ? ((last3 - avgSavingPct) / avgSavingPct) * 100 : 0;
+  const gargalos = SUPPLIERS.filter(s => s.status === 'Gargalo').length;
+  return [
+    `O fornecedor <b>${topSup.name}</b> representa ${fmtPct((Number(topSup.spend || 0) / Math.max(1, TOTAL_SPEND)) * 100)} do spend da categoria Operações.`,
+    `<b>${expiring60}</b> contrato(s) vencem nos próximos 60 dias e precisam de ação de renovação ou renegociação.`,
+    `O saving médio dos últimos 3 meses está ${vsAvg >= 0 ? 'acima' : 'abaixo'} da média histórica em ${fmtPct(Math.abs(vsAvg))}.`,
+    `<b>${gargalos}</b> fornecedor(es) estão classificados como gargalo — alta criticidade e baixa substituição.`,
+  ];
+}
+
+function getGoogleSheetUrl(){
+  if (DATA_SOURCE_CONFIG.publishedCsvUrl) {
+    return `${DATA_SOURCE_CONFIG.publishedCsvUrl}&gid=${encodeURIComponent(DATA_SOURCE_CONFIG.sheetGid)}&t=${Date.now()}`;
+  }
+  if (DATA_SOURCE_CONFIG.sheetGid) {
+    return `https://docs.google.com/spreadsheets/d/${DATA_SOURCE_CONFIG.spreadsheetId}/export?format=csv&gid=${encodeURIComponent(DATA_SOURCE_CONFIG.sheetGid)}`;
+  }
+  return `https://docs.google.com/spreadsheets/d/${DATA_SOURCE_CONFIG.spreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(DATA_SOURCE_CONFIG.sheetName)}`;
+}
+
+function parseCsvToRows(csvText){
+  if (!csvText || !csvText.trim()) return [];
+  const rows = [];
+  let current = '';
+  let row = [];
+  let inQuotes = false;
+
+  const pushCell = () => {
+    row.push(current);
+    current = '';
+  };
+
+  const pushRow = () => {
+    if (row.length) {
+      rows.push(row.map(value => value.replace(/\r/g, '')));
+    }
+    row = [];
+  };
+
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i];
+    const next = csvText[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      pushCell();
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && next === '\n') i++;
+      pushCell();
+      pushRow();
+    } else {
+      current += char;
+    }
+  }
+
+  if (current || row.length) {
+    pushCell();
+    pushRow();
+  }
+
+  return rows.filter(line => line.some(cell => String(cell).trim() !== ''));
+}
+
+function normalizeSheetRows(rawRows){
+  const aliases = {
+    fornecedor: ['fornecedor', 'supplier', 'nome fornecedor', 'fornecedores'],
+    categoria: ['categoria', 'category', 'segmento'],
+    tipo: ['tipo', 'type'],
+    descricao: ['descricao', 'descrição', 'description'],
+    proposta_inicial: ['proposta inicial', 'proposta_inicial', 'valor inicial', 'budget', 'budget inicial'],
+    percentual_negociado: ['percentual negociado', 'percentual negociado %', 'percentual', 'desconto', 'percentual de desconto'],
+    proposta_final: ['proposta final', 'proposta_final', 'valor final', 'valor final negociado', 'spend', 'valor final da proposta'],
+    saving_cost_avoid: ['saving/cost avoid', 'saving cost avoid', 'saving / cost avoid', 'saving total', 'cost avoid', 'economia'],
+    comprador: ['comprador', 'buyer', 'responsavel', 'responsável'],
+    status: ['status', 'estado'],
+    data: ['data', 'date', 'dt'],
+    mes_conclusao: ['mes de conclusao', 'mês de conclusão', 'mes conclusao', 'mês conclusão', 'completion month'],
+    unidade_negocio: ['unidade de negocio', 'unidade de negócio', 'unidade', 'business unit'],
+    cnpj: ['cnpj'],
+    contrato: ['contrato', 'numero contrato', 'número contrato', 'contract number'],
+    vencimento: ['vencimento', 'data vencimento', 'expiration', 'due date'],
+    valor_contrato: ['valor contrato', 'valor do contrato', 'contract value'],
+    prazo_pagamento: ['prazo de pagamento', 'prazo pagamento', 'payment terms', 'payment days', 'dias para pagamento'],
+  };
+
+  const headerMap = {};
+  const headers = Array.isArray(rawRows[0]) ? rawRows[0] : Object.keys(rawRows[0] || {});
+  headers.forEach((header) => {
+    const normalized = normalizeKey(header);
+    const match = Object.entries(aliases).find(([, candidates]) => candidates.includes(normalized));
+    headerMap[header] = match ? match[0] : normalized;
+  });
+
+  return rawRows.map((row) => {
+    const normalized = {};
+    Object.entries(row).forEach(([key, value]) => {
+      const mappedKey = headerMap[key] || normalizeKey(key);
+      normalized[mappedKey] = value;
+    });
+
+    const fornecedor = normalizeText(normalized.fornecedor || normalized.supplier || normalized.nome_fornecedor || '');
+    if (!fornecedor) return null;
+
+    const propostaInicial = parseNumber(normalized.proposta_inicial || normalized.budget || normalized.valor_inicial || 0);
+    const propostaFinal = parseNumber(normalized.proposta_final || normalized.spend || normalized.valor_final || normalized.valor_final_negociado || 0);
+    const saving = parseNumber(normalized.saving_cost_avoid || normalized.saving || normalized.cost_avoid || 0);
+    const budget = propostaInicial || propostaFinal;
+    const dateValue = parseDate(normalized.data || normalized.date || normalized.dt || '');
+    const completionDate = parseDate(normalized.mes_conclusao || normalized.completion_month || '') || dateValue;
+    const supplierName = fornecedor || 'Fornecedor não informado';
+
+    return {
+      id: slugify(`${supplierName}-${dateValue ? dateValue.toISOString().slice(0,10) : Math.random().toString(16).slice(2, 10)}`),
+      fornecedor: supplierName,
+      categoria: normalizeText(normalized.categoria || 'Operações'),
+      tipo: normalizeText(normalized.tipo || 'Geral'),
+      descricao: normalizeText(normalized.descricao || normalized.descricao || 'Registro da base'),
+      propostaInicial: budget,
+      propostaFinal: propostaFinal || budget,
+      saving: saving || Math.max(0, budget - (propostaFinal || budget)),
+      percentualNegociado: parseNumber(normalized.percentual_negociado || normalized.percentual || 0),
+      comprador: normalizeText(normalized.comprador || normalized.buyer || 'Compras'),
+      status: normalizeText(normalized.status || 'Vigente'),
+      data: dateValue,
+      mesConclusao: completionDate,
+      unidadeNegocio: normalizeText(normalized.unidade_negocio || normalized.unidade || 'Operações'),
+      cnpj: normalizeText(normalized.cnpj || ''),
+      contrato: normalizeText(normalized.contrato || ''),
+      vencimento: parseDate(normalized.vencimento || normalized.data || ''),
+      prazoPagamento: parseNumber(normalized.prazo_pagamento || normalized.payment_days || normalized.prazo || 0),
+      valorContrato: parseNumber(normalized.valor_contrato || normalized.contract_value || 0),
+    };
+  }).filter(Boolean);
+}
+
+function transformSheetRowsToAppData(rows){
+  const records = rows.length && rows[0].propostaFinal !== undefined ? rows : normalizeSheetRows(rows);
+  if (!records.length) return { suppliers: [], categories: [], contracts: [], purchases: [], monthly: [], totalSpend: 0, totalSaving: 0 };
+  const sourceTotalSpend = records.reduce((sum, record) => sum + Number(record.propostaFinal || record.propostaInicial || 0), 0);
+
+  const suppliersMap = new Map();
+  records.forEach((record) => {
+    const key = record.fornecedor;
+    const spend = Number(record.propostaFinal || record.propostaInicial || 0);
+    const saving = Number(record.saving || 0);
+    if (!suppliersMap.has(key)) {
+      suppliersMap.set(key, {
+        id: slugify(key),
+        name: key,
+        cnpj: record.cnpj || '',
+        spend: 0,
+        saving: 0,
+        contracts: 0,
+        paymentDays: [],
+        impacto: 3,
+        criticidade: 3,
+        status: '',
+        score: 0,
+      });
+    }
+    const supplier = suppliersMap.get(key);
+    supplier.spend += spend;
+    supplier.saving += saving;
+    supplier.contracts += record.contrato ? 1 : 0;
+    if (record.prazoPagamento > 0) supplier.paymentDays.push(record.prazoPagamento);
+  });
+
+  const suppliers = [...suppliersMap.values()].map((supplier) => {
+    const spendShare = sourceTotalSpend > 0 ? (supplier.spend / sourceTotalSpend) : 0;
+    const savingShare = Math.max(0, ((supplier.saving || 0) / Math.max(1, supplier.spend || 1)) * 100);
+    const criticidade = Math.max(1, Math.min(5, Math.round(2 + (spendShare * 2.5) + (savingShare > 10 ? 1 : 0))));
+    const impacto = Math.max(1, Math.min(5, Math.round(2 + (savingShare > 8 ? 1.4 : 0.7) + (spendShare > 0.3 ? 0.8 : 0.2))));
+    const item = { ...supplier, criticidade, impacto };
+    item.paymentDays = supplier.paymentDays.length ? supplier.paymentDays.reduce((sum, days) => sum + days, 0) / supplier.paymentDays.length : 0;
+    item.status = classify(item);
+    item.score = computeScore(item, STATE.weights || {financeiro:25, dependencia:20, substituibilidade:15, risco:15, performance:15, concentracao:10});
+    return item;
+  });
+
+  const categoryTotals = new Map();
+  records.forEach((record) => {
+    const key = record.categoria || 'Operações';
+    if (!categoryTotals.has(key)) {
+      categoryTotals.set(key, { id: slugify(key), name: key, spend: 0, saving: 0, suppliers: new Set(), contracts: 0, active: key.toLowerCase().includes('op') || key.toLowerCase().includes('oper') });
+    }
+    const entry = categoryTotals.get(key);
+    entry.spend += Number(record.propostaFinal || record.propostaInicial || 0);
+    entry.saving += Number(record.saving || 0);
+    entry.suppliers.add(record.fornecedor);
+    if (record.contrato) entry.contracts += 1;
+  });
+
+  const categories = [...categoryTotals.values()].map((category) => ({
+    id: category.id,
+    name: category.name,
+    color: category.name.toLowerCase().includes('tecn') ? '#0A6E94' : category.name.toLowerCase().includes('mark') ? '#FF007D' : category.name.toLowerCase().includes('rh') ? '#12805C' : '#F72717',
+    active: category.name.toLowerCase().includes('op') || category.name.toLowerCase().includes('oper'),
+    icon: category.name.toLowerCase().includes('tec') ? 'cpu' : category.name.toLowerCase().includes('mark') ? 'megaphone' : category.name.toLowerCase().includes('rh') ? 'users' : 'settings',
+    desc: 'Categoria alimentada pela base da Google Sheets.',
+    spend: Number(category.spend || 0),
+    saving: Number(category.saving || 0),
+    suppliers: category.suppliers.size,
+    contracts: Number(category.contracts || 0),
+  }));
+
+  const contracts = records.filter((record) => record.contrato || record.vencimento).map((record, index) => {
+    const end = record.vencimento || addDays(new Date(), 30 + (index * 15));
+    const value = Number(record.propostaFinal || record.propostaInicial || 0);
+    return {
+      id: record.contrato ? slugify(`${record.contrato}-${record.fornecedor}`) : `CT-${String(index + 1).padStart(3, '0')}`,
+      number: record.contrato || `EDN-${String(index + 1).padStart(3, '0')}`,
+      supplierId: slugify(record.fornecedor),
+      category: record.categoria || 'Operações',
+      start: addDays(end, -180),
+      end,
+      value,
+      consumed: value * 0.55,
+      saldo: value * 0.45,
+      status: record.status || 'Vigente',
+      sla: 80,
+      reajuste: 'Ajuste do contrato',
+      lastNegotiation: record.data || new Date(),
+    };
+  });
+
+  const purchases = records.map((record, index) => ({
+    id: `PC-${String(index + 1).padStart(4, '0')}`,
+    date: record.mesConclusao || record.data || new Date(),
+    supplierId: slugify(record.fornecedor),
+    category: record.categoria || 'Operações',
+    buyer: record.comprador || 'Compras',
+    valueInicial: Number(record.propostaInicial || 0),
+    valueFinal: Number(record.propostaFinal || record.propostaInicial || 0),
+    saving: Number(record.saving || 0),
+    savingPct: Number(record.propostaInicial) ? (Number(record.saving || 0) / Number(record.propostaInicial)) * 100 : 0,
+    paymentDays: Number(record.prazoPagamento || 0),
+    negotiationType: record.tipo || 'Não informado',
+    status: record.status || 'Concluída',
+    contractId: null,
+  }));
+
+  const monthMap = new Map();
+  purchases.forEach((purchase) => {
+    const purchaseDate = purchase.date instanceof Date ? purchase.date : new Date(purchase.date);
+    if (!purchaseDate || Number.isNaN(purchaseDate.getTime())) return;
+    const key = monthKey(purchaseDate);
+    if (!monthMap.has(key)) {
+      monthMap.set(key, { date: new Date(purchaseDate.getFullYear(), purchaseDate.getMonth(), 1), label: monthLabel(new Date(purchaseDate.getFullYear(), purchaseDate.getMonth(), 1)), spend: 0, saving: 0, pct: 0, count: 0 });
+    }
+    const entry = monthMap.get(key);
+    entry.spend += Number(purchase.valueFinal || 0);
+    entry.saving += Number(purchase.saving || 0);
+    entry.count += 1;
+  });
+
+  const monthly = last12Months().map((date) => {
+    const key = monthKey(date);
+    const found = monthMap.get(key) || { date, label: monthLabel(date), spend: 0, saving: 0, pct: 0, count: 0 };
+    const spend = Number(found.spend || 0);
+    const saving = Number(found.saving || 0);
+    const pct = spend > 0 ? (saving / spend) * 100 : 0;
+    return { date, label: found.label || monthLabel(date), spend, saving, pct, count: found.count || 0 };
+  });
+
+  const totalSpend = records.reduce((acc, record) => acc + Number(record.propostaFinal || record.propostaInicial || 0), 0);
+  const totalSaving = records.reduce((acc, record) => acc + Number(record.saving || 0), 0);
+
+  return { suppliers, categories, contracts, purchases, monthly, totalSpend, totalSaving };
+}
+
+async function fetchGoogleSheetData(){
+  const url = getGoogleSheetUrl();
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Falha ao carregar a planilha: ${response.status} ${response.statusText}`);
+  }
+
+  const text = await response.text();
+  if (!text || text.includes('Error')) {
+    throw new Error('Resposta vazia ou inválida da planilha');
+  }
+
+  if (text.trim().startsWith('Fornecedor') || text.includes(',')) {
+    const csvRows = parseCsvToRows(text);
+    if (csvRows.length > 1) {
+      const [header, ...dataRows] = csvRows;
+      return dataRows.map((row) => {
+        const obj = {};
+        header.forEach((key, index) => {
+          obj[key.trim()] = row[index] || '';
+        });
+        return obj;
+      });
+    }
+  }
+
+  const match = text.match(/\{.*\}/s);
+  const payload = match ? JSON.parse(match[0]) : null;
+  if (!payload || !payload.table || !Array.isArray(payload.table.rows)) {
+    throw new Error('Estrutura da planilha incompatível');
+  }
+
+  const rows = payload.table.rows.map((row) => {
+    const values = row.c || [];
+    const object = {};
+    (payload.table.cols || []).forEach((col, index) => {
+      const value = values[index] && 'v' in values[index] ? values[index].v : '';
+      object[col.label] = value;
+    });
+    return object;
+  });
+
+  return rows;
+}
+
+async function loadData(options = {}){
+  const manual = Boolean(options.manual);
+  if (APP_STATE.loading) return;
+  APP_STATE.loading = true;
+  setDataStatus('Carregando dados...', 'info');
+  console.log('Carregando dados da Google Sheets...');
+
+  try {
+    let rows = [];
+    if (DATA_SOURCE_CONFIG.allowLocalFallback) {
+      try {
+        const localResponse = await fetch(DATA_SOURCE_CONFIG.localFallbackPath, { cache: 'no-store' });
+        if (localResponse.ok) {
+          const localData = await localResponse.json();
+          rows = Array.isArray(localData) ? localData : (localData.records || localData.data || []);
+        }
+      } catch (localError) {
+        console.warn('Fallback local indisponível:', localError);
+      }
+    }
+
+    if (!rows.length) {
+      rows = await fetchGoogleSheetData();
+    }
+
+    const derived = transformSheetRowsToAppData(rows);
+    if (!derived || !derived.totalSpend && !derived.totalSaving && !derived.suppliers.length) {
+      throw new Error('A base não retornou dados válidos');
+    }
+
+    APP_STATE.data = rows;
+    APP_STATE.records = normalizeSheetRows(rows);
+    APP_STATE.hasLoaded = true;
+    APP_STATE.lastSuccessfulLoad = new Date();
+    APP_STATE.lastError = null;
+    setDerivedData(derived);
+    refreshFilteredData(false);
+
+    setDataStatus('● Dados atualizados', 'success');
+    const footer = document.getElementById('lastUpdateFooter');
+    if (footer) {
+      footer.textContent = `Última atualização: ${APP_STATE.lastSuccessfulLoad.toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'})}`;
+    }
+    console.log('Dados carregados:', rows.length);
+    render();
+  } catch (error) {
+    console.error('Erro ao carregar Google Sheets:', error);
+    APP_STATE.lastError = error;
+    if (!APP_STATE.lastSuccessfulLoad) {
+      setDataStatus('Não foi possível carregar os dados.', 'danger');
+      if (document.getElementById('content')) {
+        document.getElementById('content').innerHTML = `<div class="card panel"><div class="empty-state"><div class="e-ico">${icon('triangle-alert')}</div><div>Não foi possível carregar os dados da Google Sheets.</div></div></div>`;
+        hydrateIcons();
+      }
+    } else {
+      setDataStatus('Erro na atualização', 'warning');
+    }
+  } finally {
+    APP_STATE.loading = false;
+    const refreshButton = document.getElementById('refreshDataBtn');
+    if (refreshButton) {
+      refreshButton.disabled = false;
+      refreshButton.textContent = 'Atualizar dados';
+    }
+  }
+}
+
+function setDataStatus(text, type){
+  const badge = document.getElementById('dataSourceBadge');
+  if (!badge) return;
+  const colors = {
+    success: 'var(--success-bg)',
+    danger: 'var(--danger-bg)',
+    warning: 'var(--warning-bg)',
+    info: 'var(--info-bg)',
+  };
+  const textColors = { success: 'var(--success)', danger: 'var(--danger)', warning: 'var(--warning)', info: 'var(--info)' };
+  badge.textContent = text;
+  badge.style.background = colors[type] || 'var(--gray-100)';
+  badge.style.color = textColors[type] || 'var(--gray-700)';
+  badge.style.borderColor = 'transparent';
+}
+
+function buildAlerts(){
+  return [];
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const NAV = [
+  {id:'dashboard', label:'Dashboard', icon:'layout-dashboard'},
+  {id:'categorias', label:'Minhas Categorias', icon:'layers-3'},
+  {id:'fornecedores', label:'Fornecedores', icon:'building-2'},
+  {id:'compras', label:'Compras', icon:'shopping-cart'},
+  {id:'savings', label:'Savings', icon:'piggy-bank'},
+  {id:'performance', label:'Performance', icon:'chart-no-axes-combined'},
+  {id:'riscos', label:'Riscos', icon:'shield-alert'},
+  {id:'config', label:'Configurações', icon:'settings', soon:true},
+];
+function renderNav(active){
+  const el = document.getElementById('navList');
+  el.innerHTML = '<div class="nav-group-label">Navegação</div>' + NAV.map(n=>`
+    <div class="nav-item ${n.id===active?'active':''}" onclick="go('${n.id}')">
+      <span class="nav-ico">${icon(n.icon)}</span>${n.label}
+      ${n.soon?'<span class="nav-badge">em breve</span>':''}
+    </div>`).join('');
+  hydrateIcons();
+}
+
+let STATE = {
+  period:'365',
+  sortSuppliers:{key:'spend',dir:-1},
+  sortContracts:{key:'end',dir:1},
+  filters:{month:'all', category:'all', supplier:'all', status:'all', kraljic:'all'},
+  weights:{financeiro:25,dependencia:20,substituibilidade:15,risco:15,performance:15,concentracao:10},
+  assessments:{},
+  logos:JSON.parse(localStorage.getItem('procurement_supplier_logos') || '{}')
+};
+
+function icon(name, className='icon'){ return `<i data-lucide="${name}" class="${className}" aria-hidden="true"></i>`; }
+function hydrateIcons(){ if (window.lucide?.createIcons) window.lucide.createIcons({attrs:{'stroke-width':2}}); }
+function supplierLogo(supplier, className='avatar'){
+  const logo = STATE.logos[supplier.id];
+  return logo ? `<div class="${className}"><img src="${logo}" alt="Logo de ${supplier.name}"></div>` : `<div class="${className}">${supplier.name.slice(0,2).toUpperCase()}</div>`;
+}
+function saveSupplierLogo(id, input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  if(!/^image\/(png|jpe?g|svg\+xml|webp)$/.test(file.type)){
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    STATE.logos[id] = reader.result;
+    localStorage.setItem('procurement_supplier_logos', JSON.stringify(STATE.logos));
+    render();
+  };
+  reader.readAsDataURL(file);
+}
+function getFilterRecords(){
+  const filters = STATE.filters;
+  const source = APP_STATE.records || [];
+  return source.filter(record => {
+    const processDate = record.mesConclusao || record.data;
+    const month = processDate instanceof Date && !Number.isNaN(processDate.getTime()) ? String(processDate.getMonth() + 1).padStart(2, '0') : '';
+    if (filters.month !== 'all' && month !== filters.month) return false;
+    if (filters.category !== 'all' && record.categoria !== filters.category) return false;
+    if (filters.supplier !== 'all' && record.fornecedor !== filters.supplier) return false;
+    if (filters.status !== 'all' && record.status !== filters.status) return false;
+    if (filters.kraljic !== 'all') {
+      const supplier = SUPPLIERS.find(item => item.name === record.fornecedor);
+      if (!supplier || supplier.status !== filters.kraljic) return false;
+    }
+    return true;
+  });
+}
+function setDerivedData(derived){
+  TOTAL_SPEND = derived.totalSpend;
+  TOTAL_SAVING = derived.totalSaving;
+  SUPPLIERS = derived.suppliers;
+  CATEGORIES = derived.categories;
+  CONTRACTS = derived.contracts;
+  PURCHASES = derived.purchases;
+  MONTHLY = derived.monthly;
+  SUPPLIERS.forEach(supplier => {
+    const assessment = STATE.assessments[supplier.id];
+    if (assessment) {
+      supplier.impacto = Number(assessment.impacto || supplier.impacto);
+      supplier.criticidade = Number(assessment.risco || supplier.criticidade);
+      supplier.assessmentScore = Math.round(Object.values(assessment).reduce((sum, item)=>sum+Number(item||0),0) / Object.values(assessment).length * 20);
+      supplier.status = classify(supplier);
+    }
+    supplier.score = computeScore(supplier, STATE.weights);
+    supplier.status = classify(supplier);
+  });
+  ALERTS = buildAlerts();
+}
+function refreshFilteredData(shouldRender=true){
+  if (!APP_STATE.records.length) return;
+  setDerivedData(transformSheetRowsToAppData(getFilterRecords()));
+  if (shouldRender) render();
+}
+function updateFilter(key, value){
+  STATE.filters[key] = value;
+  refreshFilteredData();
+}
+function resetFilters(){
+  STATE.filters = {month:'all', category:'all', supplier:'all', status:'all', kraljic:'all'};
+  refreshFilteredData();
+}
+function filterOptions(key, current){
+  const values = [...new Set((APP_STATE.records || []).map(record => record[key]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+  return values.map(value => `<option value="${value}" ${current===value?'selected':''}>${value}</option>`).join('');
+}
+function sharedFilters(){
+  const months = [...new Set((APP_STATE.records || []).map(record => { const date=record.mesConclusao || record.data; return date instanceof Date ? String(date.getMonth() + 1).padStart(2, '0') : ''; }).filter(Boolean))].sort();
+  const monthNames = months.map(month => ({value:month, label:new Date(2024, Number(month) - 1, 1).toLocaleDateString('pt-BR', {month:'long'})}));
+  const f = STATE.filters;
+  return `<div class="filters-bar" aria-label="Filtros do portal">
+    <div class="filter-field"><label for="filter-month">${icon('calendar-days')} Mês</label><select id="filter-month" class="select" onchange="updateFilter('month', this.value)"><option value="all">Todos os meses</option>${monthNames.map(month=>`<option value="${month.value}" ${f.month===month.value?'selected':''}>${month.label}</option>`).join('')}</select></div>
+    <div class="filter-field"><label for="filter-category">${icon('layers-3')} Categoria</label><select id="filter-category" class="select" onchange="updateFilter('category', this.value)"><option value="all">Todas</option>${filterOptions('categoria',f.category)}</select></div>
+    <div class="filter-field"><label for="filter-supplier">${icon('building-2')} Fornecedor</label><select id="filter-supplier" class="select" onchange="updateFilter('supplier', this.value)"><option value="all">Todos</option>${filterOptions('fornecedor',f.supplier)}</select></div>
+    <div class="filter-field"><label for="filter-status">${icon('badge-check')} Status</label><select id="filter-status" class="select" onchange="updateFilter('status', this.value)"><option value="all">Todos</option>${filterOptions('status',f.status)}</select></div>
+    <div class="filter-field"><label for="filter-kraljic">${icon('target')} Kraljic</label><select id="filter-kraljic" class="select" onchange="updateFilter('kraljic', this.value)"><option value="all">Todas</option>${['Estratégico','Alavancagem','Gargalo','Não crítico'].map(value=>`<option value="${value}" ${f.kraljic===value?'selected':''}>${value}</option>`).join('')}</select></div>
+    <button class="icon-btn" title="Limpar filtros" aria-label="Limpar filtros" onclick="resetFilters()">${icon('rotate-ccw')}</button>
+  </div>`;
+}
+
+function go(page, param){
+  window.location.hash = param ? `${page}/${param}` : page;
+}
+function toggleTheme(){
+  const html = document.documentElement;
+  html.setAttribute('data-theme', html.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+}
+function setPeriod(v){ STATE.period = v; render(); }
+
+/* ============================================================
+   RENDER — router
+   ============================================================ */
+const charts = {}; // guarda instâncias Chart.js ativas para destruir ao trocar de tela
+function destroyCharts(){ Object.values(charts).forEach(c=>c && c.destroy()); Object.keys(charts).forEach(k=>delete charts[k]); }
+
+function setHeader(title, sub){
+  document.getElementById('pageTitle').textContent = title;
+  document.getElementById('pageSub').textContent = sub;
+}
+
+function render(){
+  const hash = (window.location.hash||'#dashboard').slice(1);
+  const [page, param] = hash.split('/');
+  destroyCharts();
+  document.getElementById('sidebar').classList.remove('open');
+  const root = ['dashboard','categorias','fornecedores','compras','savings','performance','riscos','config'].includes(page) ? page : 'dashboard';
+  renderNav(root);
+  const c = document.getElementById('content');
+  if(page==='dashboard') return renderDashboard(c);
+  if(page==='categorias') return renderCategorias(c);
+  if(page==='fornecedores' && !param) return renderFornecedoresList(c);
+  if(page==='fornecedores' && param) return renderFornecedorDetail(c, param);
+  if(page==='compras') return renderCompras(c);
+  if(page==='savings') return renderSavings(c);
+  if(page==='performance') return renderPerformance(c);
+  if(page==='riscos') return renderRiscos(c);
+  if(page==='relatorios' || page==='config') return renderSoon(c, page);
+  renderDashboard(c);
+}
+window.addEventListener('hashchange', render);
+
+/* ---------- Dashboard ---------- */
+function renderDashboard(c){
+  setHeader('Dashboard', 'Visão executiva da carteira de Operações');
+
+  if (!APP_STATE.hasLoaded && !APP_STATE.loading) {
+    c.innerHTML = `
+      <div class="card panel">
+        <div class="empty-state">
+          <div class="e-ico">${icon('loader-circle')}</div>
+          <div>Carregando dados da planilha...</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const paymentDays = PURCHASES.filter(p=>p.paymentDays>0).map(p=>p.paymentDays);
+  const avgPaymentDays = paymentDays.length ? paymentDays.reduce((sum, days)=>sum+days,0)/paymentDays.length : 0;
+  const savingPct = TOTAL_SPEND > 0 ? (TOTAL_SAVING / TOTAL_SPEND) * 100 : 0;
+  c.innerHTML = `
+    ${sharedFilters()}
+    <div class="grid kpis" style="margin-bottom:14px;">
+      ${kpiCard('Spend da categoria', fmtMoney(TOTAL_SPEND), null, 'total nos filtros atuais', 'wallet-cards')}
+      ${kpiCard('Saving realizado', fmtMoney(TOTAL_SAVING), null, 'economia capturada', 'piggy-bank')}
+      ${kpiCard('Total de fornecedores', SUPPLIERS.length, null, 'fornecedores únicos', 'building-2')}
+      ${kpiCard('Saving %', fmtPct(savingPct), null, 'saving ÷ spend', 'percent')}
+      ${kpiCard('Prazo médio de pagamento', avgPaymentDays ? `${Math.round(avgPaymentDays)} dias` : '--', null, 'média da base filtrada', 'calendar-clock')}
+    </div>
+    <div class="card panel" style="margin-bottom:14px;">
+      <div class="panel-head centered"><div><div class="panel-title">Spend x Saving por categoria</div><div class="panel-sub">Clique em uma categoria para ver seus fornecedores</div></div></div>
+      <div class="chart-box" style="height:300px;"><canvas id="evoChart"></canvas></div>
+      <div class="tbl-wrap" style="margin-top:16px;">${categoryAnalysisTable()}</div>
+    </div>
+    <div class="card panel" style="margin-bottom:14px;">
+      <div class="panel-head centered"><div><div class="panel-title">Prazo Médio de Pagamento (DPO)</div><div class="panel-sub">Média mensal dos prazos existentes na base filtrada</div></div></div>
+      <div class="chart-box" style="height:280px;"><canvas id="paymentChart"></canvas></div>
+    </div>
+    <div class="card panel">
+      <div class="panel-head centered"><div><div class="panel-title">Matriz de Kraljic</div><div class="panel-sub">Impacto financeiro x risco de fornecimento</div></div></div>
+      <div class="kraljic-legend"><span><i style="background:#D97706"></i>Gargalo</span><span><i style="background:#DC2626"></i>Estratégico</span><span><i style="background:#2563EB"></i>Alavancagem</span><span><i style="background:#64748B"></i>Não crítico</span></div>
+      <div class="kraljic-wrap chart-box" style="height:340px;"><canvas id="kraljicChartMini"></canvas></div>
+    </div>
+  `;
+  drawEvoChart('both');
+  drawPaymentChart();
+  drawKraljic('kraljicChartMini');
+  hydrateIcons();
+}
+function kpiCard(label, value, delta, sub, iconName='bar-chart-3'){
+  return `<div class="card kpi-card">
+    <div class="kpi-head"><span>${icon(iconName)}</span><div class="kpi-label">${label}</div></div>
+    <div class="kpi-value num">${value}</div>
+  </div>`;
+}
+function alertRow(a){
+  const bg = {red:'var(--danger-bg)',amber:'var(--warning-bg)',green:'var(--success-bg)'}[a.level];
+  const fg = {red:'var(--danger)',amber:'var(--warning)',green:'var(--success)'}[a.level];
+  return `<div class="alert-item"><div class="alert-ico" style="background:${bg};color:${fg};">${a.icon}</div>
+    <div><div class="alert-text">${a.text}</div><div class="alert-time">${a.when}</div></div></div>`;
+}
+function setEvoMode(mode){
+  document.querySelectorAll('#evoSeg button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  drawEvoChart(mode);
+}
+function drawEvoChart(mode){
+  const ctx = document.getElementById('evoChart');
+  if(!ctx) return;
+  if(charts.evo) charts.evo.destroy();
+  const labels = CATEGORIES.map(category=>category.name);
+  const datasets = [
+    {label:'Spend', data:CATEGORIES.map(category=>category.spend), backgroundColor:'#F72717', borderRadius:5, maxBarThickness:34},
+    {label:'Saving', data:CATEGORIES.map(category=>category.saving), backgroundColor:'#12805C', borderRadius:5, maxBarThickness:34},
+  ];
+  charts.evo = new Chart(ctx, {
+    type:'bar',
+    data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      onClick:(event, elements)=>{ if(elements.length) showCategoryDetails(labels[elements[0].index]); },
+      plugins:{legend:{display:true, position:'top', align:'center', labels:{boxWidth:10, usePointStyle:true, font:{size:11}}},
+        tooltip:{callbacks:{label:(context)=> ` ${context.dataset.label}: ${fmtMoneyFull(context.raw)}`}}},
+      scales:{
+        x:{grid:{display:false}, offset:true, ticks:{font:{size:11}}},
+        y:{beginAtZero:true, grid:{color:'#EEF0F3'}, ticks:{font:{size:10}, callback:(v)=>fmtMoney(v)}}
+      },
+      categoryPercentage:.58,
+      barPercentage:.76
+    }
+  });
+}
+function categoryAnalysisTable(){
+  return `<table><thead><tr><th>Categoria</th><th>Spend</th><th>Saving</th><th>Saving %</th></tr></thead><tbody>${CATEGORIES.map(category=>`<tr class="clickable" onclick="showCategoryDetails('${category.name.replace(/'/g,"\\'")}')"><td style="font-weight:600;">${category.name}</td><td class="num">${fmtMoney(category.spend)}</td><td class="num" style="color:var(--success);">${fmtMoney(category.saving)}</td><td class="num">${fmtPct(category.spend ? category.saving / category.spend * 100 : 0)}</td></tr>`).join('')}</tbody></table>`;
+}
+function drawPaymentChart(){
+  const canvas = document.getElementById('paymentChart');
+  if(!canvas) return;
+  if(charts.payment) charts.payment.destroy();
+  const monthMap = new Map();
+  PURCHASES.filter(p=>p.paymentDays > 0).forEach(purchase=>{
+    const date = purchase.date instanceof Date ? purchase.date : new Date(purchase.date);
+    if(Number.isNaN(date.getTime())) return;
+    const key = monthKey(date);
+    if(!monthMap.has(key)) monthMap.set(key, {date:new Date(date.getFullYear(), date.getMonth(), 1), values:[]});
+    monthMap.get(key).values.push(Number(purchase.paymentDays));
+  });
+  const monthly = [...monthMap.values()].sort((a,b)=>a.date-b.date);
+  const pointColors = monthly.map(item => {
+    const average = item.values.reduce((sum, value)=>sum+value,0) / item.values.length;
+    return average >= 60 ? '#12805C' : '#F04B3E';
+  });
+  charts.payment = new Chart(canvas, {
+    type:'line',
+    data:{labels:monthly.map(item=>monthLabel(item.date)), datasets:[{label:'Prazo médio', data:monthly.map(item=>item.values.reduce((sum, value)=>sum+value,0)/item.values.length), borderColor:'#F72717', backgroundColor:'rgba(247,39,23,.10)', fill:true, tension:.32, pointRadius:4, pointBackgroundColor:pointColors, pointBorderColor:'#fff', pointBorderWidth:2, borderWidth:2}]},
+    options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false}, plugins:{legend:{display:false}, tooltip:{callbacks:{label:context=>` Prazo médio: ${Math.round(context.raw)} dias`}}}, scales:{x:{grid:{display:false}}, y:{beginAtZero:false, suggestedMin:0, ticks:{callback:value=>`${value}d`}, grid:{color:'#EEF0F3'}}}}
+  });
+}
+function showCategoryDetails(categoryName){
+  const rows = APP_STATE.records.filter(record => record.categoria === categoryName);
+  const baseSuppliers = transformSheetRowsToAppData(APP_STATE.records).suppliers;
+  const bySupplier = new Map();
+  rows.forEach(record => {
+    if(!bySupplier.has(record.fornecedor)) bySupplier.set(record.fornecedor,{name:record.fornecedor,spend:0,saving:0,paymentDays:[],status:''});
+    const item = bySupplier.get(record.fornecedor);
+    item.spend += Number(record.propostaFinal || record.propostaInicial || 0);
+    item.saving += Number(record.saving || 0);
+    if(record.prazoPagamento) item.paymentDays.push(record.prazoPagamento);
+  });
+  const supplierRows = [...bySupplier.values()].map(item => {
+    const supplier = baseSuppliers.find(entry=>entry.name===item.name) || {};
+    item.status = supplier.status || 'Não classificado';
+    item.paymentDays = item.paymentDays.length ? Math.round(item.paymentDays.reduce((a,b)=>a+b,0)/item.paymentDays.length) : 0;
+    return item;
+  });
+  const backdrop = document.createElement('div');
+  backdrop.className = 'drawer-backdrop';
+  backdrop.id = 'categoryDrawer';
+  backdrop.innerHTML = `<aside class="drawer" role="dialog" aria-label="Fornecedores da categoria">
+    <div class="drawer-head"><div><div class="drawer-title">Fornecedores da categoria</div><div class="panel-sub">Categoria: ${categoryName}</div></div><button class="drawer-close" aria-label="Fechar" onclick="closeDrawer()">${icon('x')}</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Fornecedor</th><th>Spend</th><th>Saving</th><th>Saving %</th><th>Kraljic</th><th>Prazo Pgto</th></tr></thead><tbody>
+      ${supplierRows.map(item=>{ const supplier=baseSuppliers.find(entry=>entry.name===item.name)||{id:slugify(item.name),name:item.name}; return `<tr class="clickable" onclick="closeDrawer();go('fornecedores','${supplier.id}')"><td><div class="name-cell">${supplierLogo(supplier)}<span style="font-weight:600;">${item.name}</span></div></td><td class="num">${fmtMoney(item.spend)}</td><td class="num" style="color:var(--success);">${fmtMoney(item.saving)}</td><td class="num">${fmtPct(item.spend ? item.saving/item.spend*100 : 0)}</td><td><span class="badge ${classColor(item.status)}">${item.status}</span></td><td class="num">${item.paymentDays ? item.paymentDays+' dias' : '--'}</td></tr>`; }).join('')}
+    </tbody></table></div>
+  </aside>`;
+  backdrop.addEventListener('click', event=>{if(event.target===backdrop) closeDrawer();});
+  document.body.appendChild(backdrop);
+  hydrateIcons();
+}
+function closeDrawer(){ document.getElementById('categoryDrawer')?.remove(); }
+function drawKraljic(canvasId){
+  const ctx = document.getElementById(canvasId);
+  if(!ctx) return;
+  const maxSpend = Math.max(1, ...SUPPLIERS.map(s=>s.spend));
+  const groups = {'Estratégico':'#DC2626','Gargalo':'#D97706','Alavancagem':'#2563EB','Não crítico':'#64748B'};
+  const datasets = Object.keys(groups).map(g=>({
+    label:g,
+    backgroundColor: groups[g]+'CC',
+    borderColor: groups[g],
+    borderWidth:1,
+    data: SUPPLIERS.filter(s=>s.status===g).map(s=>({x:s.impacto, y:s.criticidade, r: 8 + (s.spend/maxSpend)*22, name:s.name, spend:s.spend, saving:s.saving, savingPct:s.spend ? s.saving/s.spend*100 : 0, risk:riskLevel(s.score).label, id:s.id}))
+  }));
+  const key = 'k_'+canvasId;
+  charts[key] = new Chart(ctx, {
+    type:'bubble',
+    data:{datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false, onClick:(evt,els)=>{ if(els.length){ const d=els[0]; const pt=charts[key].data.datasets[d.datasetIndex].data[d.index]; go('fornecedores', pt.id);} },
+      plugins:{
+        legend:{position:'bottom', labels:{boxWidth:10, usePointStyle:true, font:{size:11}}},
+        tooltip:{callbacks:{label:(ctx)=> `${ctx.raw.name} · ${fmtMoney(ctx.raw.spend)}`, afterLabel:(ctx)=>[`Saving: ${fmtMoney(ctx.raw.saving)}`,`Saving %: ${fmtPct(ctx.raw.savingPct)}`,`Risco: ${ctx.raw.risk}`,`Classificação: ${ctx.dataset.label}`]}}
+      },
+      scales:{
+        x:{min:0, max:6, title:{display:true, text:'Impacto financeiro', font:{size:11}}, grid:{color:'#EEF0F3'}, ticks:{display:false}},
+        y:{min:0, max:6, title:{display:true, text:'Criticidade / Risco', font:{size:11}}, grid:{color:'#EEF0F3'}, ticks:{display:false}},
+      }
+    },
+    plugins:[{id:'kraljicQuadrants',beforeDatasetsDraw(chart){
+      const area=chart.chartArea; if(!area) return;
+      const midX=area.left+area.width/2; const midY=area.top+area.height/2; const c=chart.ctx;
+      c.save(); c.fillStyle='rgba(247,39,23,.035)'; c.fillRect(midX,area.top,area.right-midX,midY-area.top);
+      c.fillStyle='rgba(180,91,4,.035)'; c.fillRect(area.left,area.top,midX-area.left,midY-area.top);
+      c.fillStyle='rgba(10,110,148,.035)'; c.fillRect(midX,midY,area.right-midX,area.bottom-midY);
+      c.fillStyle='rgba(138,144,160,.035)'; c.fillRect(area.left,midY,midX-area.left,area.bottom-midY);
+      c.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--gray-500'); c.font='600 10px Inter';
+      c.fillText('GARGALO',area.left+10,area.top+18); c.fillText('ESTRATÉGICO',midX+10,area.top+18); c.fillText('NÃO CRÍTICO',area.left+10,area.bottom-10); c.fillText('ALAVANCAGEM',midX+10,area.bottom-10); c.restore();
+    }}]
+  });
+}
+
+/* ---------- Categorias ---------- */
+function renderCategorias(c){
+  setHeader('Minhas Categorias', 'Arquitetura multicategoria — Operações ativa, demais em expansão');
+  c.innerHTML = `<div class="grid cat-grid">
+    ${CATEGORIES.map(cat=>{
+      const spend = cat.active ? TOTAL_SPEND : cat.spend;
+      const saving = cat.active ? TOTAL_SAVING : cat.saving;
+      const savingPct = spend > 0 ? (saving / spend) * 100 : 0;
+      const sup = cat.active ? SUPPLIERS.length : cat.suppliers;
+      return `<div class="cat-card ${cat.active?'featured':'disabled'}" onclick="${cat.active?`go('dashboard')`:`return false`}">
+        ${cat.active?'<div class="cat-topline"></div>':''}
+        <div class="cat-head">
+          <div>
+            <div class="cat-icon">${icon(cat.icon)}</div>
+            <div class="cat-name">${cat.name}</div>
+            <div class="cat-desc">${cat.desc}</div>
+          </div>
+          <span class="cat-status-pill ${cat.active?'on':'off'}">${cat.active?'● Ativa':'Em breve'}</span>
+        </div>
+        <div class="cat-metrics-primary">
+          <div><div class="cat-metric-label">Spend</div><div class="cat-metric-value num">${fmtMoney(spend)}</div></div>
+          <div><div class="cat-metric-label">Saving</div><div class="cat-metric-value num accent">${fmtMoney(saving)}</div></div>
+        </div>
+        <div class="cat-metrics-secondary">
+          <div><div class="cat-metric-label">Saving %</div><div class="cat-metric-value sm num">${fmtPct(savingPct)}</div></div>
+          <div><div class="cat-metric-label">Fornecedores</div><div class="cat-metric-value sm num">${sup}</div></div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="small-muted" style="margin-top:16px;">Os indicadores desta área são calculados diretamente dos registros publicados na base oficial.</div>`;
+  hydrateIcons();
+}
+
+/* ---------- Fornecedores (lista) ---------- */
+function suppliersTable(list, full){
+  const s = STATE.sortSuppliers;
+  const sorted = [...list].sort((a,b)=> s.key==='name' ? a.name.localeCompare(b.name)*s.dir : (a[s.key]-b[s.key])*s.dir);
+  const th = (key,label)=> `<th class="${s.key===key?'sorted':''}" onclick="sortSuppliers('${key}', ${full})">${label}${s.key===key?`<span class="arrow">${s.dir>0?'▲':'▼'}</span>`:''}</th>`;
+  return `<table><thead><tr>
+    <th style="width:26px;">#</th>
+    ${th('name','Fornecedor')} ${th('spend','Spend')} <th>% Categoria</th> ${th('saving','Saving')} <th>Classificação</th> <th>Risco</th>
+  </tr></thead><tbody>
+  ${sorted.map((sp,i)=>{
+    const risk = riskLevel(sp.score);
+    return `<tr class="clickable" onclick="go('fornecedores','${sp.id}')">
+      <td class="small-muted">${i+1}</td>
+      <td><div class="name-cell">${supplierLogo(sp)}${sp.name}</div></td>
+      <td class="num">${fmtMoney(sp.spend)}</td>
+      <td class="num small-muted">${fmtPct((sp.spend/TOTAL_SPEND)*100)}</td>
+      <td class="num" style="color:var(--success);">${fmtMoney(sp.saving)}</td>
+      <td><span class="badge ${classColor(sp.status)}">${sp.status}</span></td>
+      <td><span class="badge ${risk.color==='green'?'green':risk.color}">${sp.score} · ${risk.label}</span></td>
+    </tr>`;
+  }).join('')}
+  </tbody></table>`;
+}
+function sortSuppliers(key, full){
+  const s = STATE.sortSuppliers;
+  s.dir = (s.key===key) ? -s.dir : -1;
+  s.key = key;
+  render();
+}
+function renderFornecedoresList(c){
+  setHeader('Fornecedores', 'Gestão e Supplier Intelligence da categoria Operações');
+  c.innerHTML = `
+    <div class="filters">
+      <input class="select" placeholder="Buscar fornecedor..." style="min-width:220px;" oninput="filterSuppliers(this.value)">
+      <select class="select" id="classFilter" onchange="filterSuppliers()"><option value="">Classificação: Todas</option>
+        <option>Estratégico</option><option>Gargalo</option><option>Alavancagem</option><option>Não crítico</option></select>
+    </div>
+    <div class="card panel"><div class="tbl-wrap" id="supTableWrap">${suppliersTable(SUPPLIERS, true)}</div></div>`;
+}
+function filterSuppliers(){
+  const q = (document.querySelector('.filters input')?.value || '').toLowerCase();
+  const cls = document.getElementById('classFilter')?.value || '';
+  const list = SUPPLIERS.filter(s => s.name.toLowerCase().includes(q) && (!cls || s.status===cls));
+  document.getElementById('supTableWrap').innerHTML = suppliersTable(list, true);
+}
+
+/* ---------- Fornecedor detalhe ---------- */
+const ASSESSMENT_QUESTIONS = [
+  {key:'impacto', label:'Impacto financeiro para a operação'},
+  {key:'risco', label:'Risco de fornecimento'},
+  {key:'dependencia', label:'Dependência operacional'},
+  {key:'substituibilidade', label:'Dificuldade de substituição'},
+  {key:'performance', label:'Performance do fornecedor'}
+];
+function assessmentFor(supplier){
+  if(!STATE.assessments[supplier.id]) STATE.assessments[supplier.id] = {impacto:supplier.impacto,risco:supplier.criticidade,dependencia:supplier.criticidade,substituibilidade:supplier.criticidade,performance:Math.max(1,Math.min(5,6-supplier.criticidade))};
+  return STATE.assessments[supplier.id];
+}
+function updateAssessment(id, key, value){
+  const supplier = SUPPLIERS.find(item=>item.id===id);
+  if(!supplier) return;
+  const assessment = assessmentFor(supplier);
+  assessment[key] = Number(value);
+  supplier.impacto = assessment.impacto;
+  supplier.criticidade = assessment.risco;
+  supplier.assessmentScore = Math.round(Object.values(assessment).reduce((sum, item)=>sum+Number(item||0),0) / Object.values(assessment).length * 20);
+  supplier.status = classify(supplier);
+  supplier.score = computeScore(supplier, STATE.weights);
+  render();
+}
+function assessmentPanel(supplier){
+  const assessment = assessmentFor(supplier);
+  const finalScore = Math.round(Object.values(assessment).reduce((sum, item)=>sum+Number(item||0),0) / Object.values(assessment).length * 20);
+  return `<div class="card panel" style="margin-bottom:14px;"><div class="panel-head centered"><div><div class="panel-title">Avaliação do fornecedor</div><div class="panel-sub">Notas de 1 a 5 que alimentam o score e a classificação Kraljic</div></div></div>
+    <div class="assessment-grid">${ASSESSMENT_QUESTIONS.map(question=>`<label for="assessment-${question.key}">${question.label}</label><select id="assessment-${question.key}" class="select" onchange="updateAssessment('${supplier.id}','${question.key}',this.value)">${[1,2,3,4,5].map(value=>`<option value="${value}" ${Number(assessment[question.key])===value?'selected':''}>${value}</option>`).join('')}</select>`).join('')}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:12px;border-top:1px solid var(--gray-200);"><span class="small-muted">Score final da avaliação</span><strong class="num" style="font-size:22px;color:var(--red);">${finalScore}</strong></div>
+  </div>`;
+}
+function renderFornecedorDetail(c, id){
+  const s = SUPPLIERS.find(x=>x.id===id);
+  if(!s){ c.innerHTML = emptyState('Fornecedor não encontrado'); return; }
+  setHeader(s.name, 'Supplier Intelligence · '+s.cnpj);
+  const risk = riskLevel(s.score);
+  const purchases = PURCHASES.filter(x=>x.supplierId===id).sort((a,b)=>b.date-a.date);
+  const monthly12 = last12Months().map(d=>{
+    const key=monthKey(d); const p = purchases.filter(x=>monthKey(x.date)===key);
+    return {label:monthLabel(d), spend:p.reduce((a,x)=>a+x.valueFinal,0), saving:p.reduce((a,x)=>a+x.saving,0)};
+  });
+  c.innerHTML = `
+    <div class="back-link" onclick="go('fornecedores')">← Voltar para Fornecedores</div>
+    <div class="detail-head">
+      <div class="entity-title">
+        ${supplierLogo(s,'entity-avatar')}
+        <div><div class="entity-name">${s.name} <span class="badge ${classColor(s.status)}" style="margin-left:6px;">${s.status}</span></div>
+        <div class="entity-meta">${s.cnpj} · ${purchases.length} compra(s) nos últimos 12 meses</div></div>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="text-align:right;"><div class="small-muted">Score de criticidade</div><div style="font-size:12px;font-weight:600;color:var(--${risk.color==='green'?'success':risk.color==='red'?'danger':risk.color==='amber'?'warning':'info'});">${risk.label}</div></div>
+        <div class="score-ring" style="background:conic-gradient(var(--red) ${s.score*3.6}deg, var(--gray-200) 0deg);">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;"><span class="n num">${s.score}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="logo-upload"><div class="supplier-logo-preview">${STATE.logos[s.id] ? `<img src="${STATE.logos[s.id]}" alt="Logo de ${s.name}">` : icon('image')}</div><div><strong>Logo do fornecedor</strong><div class="small-muted">PNG, JPG, SVG ou WEBP</div><input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onchange="saveSupplierLogo('${s.id}', this)"></div></div>
+    <div class="grid mini-kpis" style="margin-bottom:14px;">
+      ${kpiCard('Spend total', fmtMoney(s.spend), null, '12 meses')}
+      ${kpiCard('Savings gerados', fmtMoney(s.saving), null, fmtPct((s.saving/s.spend)*100)+' médio')}
+      ${kpiCard('Compras no período', purchases.length, null, 'últimos 12 meses')}
+      ${kpiCard('Prazo médio', s.paymentDays ? `${Math.round(s.paymentDays)} dias` : '--', null, 'prazo de pagamento')}
+    </div>
+    ${assessmentPanel(s)}
+    <div class="row2" style="margin-bottom:14px;">
+      <div class="card panel">
+        <div class="panel-title">Evolução do spend</div>
+        <div class="chart-box" style="height:220px; margin-top:8px;"><canvas id="supEvo"></canvas></div>
+      </div>
+      <div class="card panel">
+        <div class="panel-title">Saving por mês</div>
+        <div class="chart-box" style="height:220px; margin-top:8px;"><canvas id="supSaving"></canvas></div>
+      </div>
+    </div>
+    <div class="card panel">
+      <div class="panel-title" style="margin-bottom:10px;">Histórico de compras</div>
+      <div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Valor inicial</th><th>Valor final</th><th>Saving</th><th>Tipo</th></tr></thead>
+      <tbody>${purchases.slice(0,10).map(p=>`<tr>
+        <td>${fmtDate(p.date)}</td><td class="num">${fmtMoney(p.valueInicial)}</td><td class="num">${fmtMoney(p.valueFinal)}</td>
+        <td class="num" style="color:var(--success);">${fmtMoney(p.saving)} <span class="small-muted">(${fmtPct(p.savingPct)})</span></td><td>${p.negotiationType}</td></tr>`).join('')}</tbody></table></div>
+      ${purchases.length>10?`<div class="small-muted" style="margin-top:8px;">+ ${purchases.length-10} compra(s) adicionais — ver em Compras</div>`:''}
+    </div>
+  `;
+  charts.supEvo = new Chart(document.getElementById('supEvo'), {type:'bar', data:{labels:monthly12.map(m=>m.label), datasets:[{label:'Spend', data:monthly12.map(m=>m.spend), backgroundColor:'#F72717', borderRadius:4, maxBarThickness:22}]},
+    options:{responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>fmtMoneyFull(ctx.raw)}}}, scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#EEF0F3'},ticks:{font:{size:10},callback:v=>fmtMoney(v)}}}}});
+  charts.supSaving = new Chart(document.getElementById('supSaving'), {type:'line', data:{labels:monthly12.map(m=>m.label), datasets:[{data:monthly12.map(m=>m.saving), borderColor:'#F72717', backgroundColor:'rgba(247,39,23,.12)', fill:true, tension:.35, pointRadius:0, borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>fmtMoneyFull(ctx.raw)}}}, scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#EEF0F3'},ticks:{font:{size:10},callback:v=>fmtMoney(v)}}}}});
+}
+function statusBadge(ct){
+  const d = daysToExpire(ct); const b = expireBucket(d);
+  return `<span class="badge ${b.color}">${b.label}</span>`;
+}
+
+/* ---------- Contratos (lista + timeline) ---------- */
+function renderContratosList(c){
+  setHeader('Contratos', 'Controle de vigência e vencimentos');
+  const buckets = {vencendo30:0, vencendo60:0, vencendo90:0, vencidos:0};
+  CONTRACTS.forEach(ct=>{ const d=daysToExpire(ct);
+    if(d<0) buckets.vencidos++; else if(d<30) buckets.vencendo30++; else if(d<60) buckets.vencendo60++; else if(d<90) buckets.vencendo90++; });
+  c.innerHTML = `
+    <div class="grid kpis" style="grid-template-columns:repeat(5,1fr); margin-bottom:14px;">
+      ${kpiCard('Total de contratos', CONTRACTS.length, null, CONTRACTS.filter(x=>x.status==='Vigente').length+' vigentes')}
+      ${kpiCard('Vencendo em 30 dias', buckets.vencendo30, null, '')}
+      ${kpiCard('Vencendo em 60 dias', buckets.vencendo60, null, '')}
+      ${kpiCard('Vencendo em 90 dias', buckets.vencendo90, null, '')}
+      ${kpiCard('Vencidos', buckets.vencidos, null, '')}
+    </div>
+    <div class="card panel" style="margin-bottom:14px;">
+      <div class="panel-title" style="margin-bottom:4px;">Linha do tempo de vencimentos</div>
+      <div class="panel-sub" style="margin-bottom:6px;">Passe o mouse sobre um ponto para identificar o contrato</div>
+      <div class="timeline-track" id="timelineTrack"></div>
+    </div>
+    <div class="card panel">
+      <div class="panel-head"><div class="panel-title">Todos os contratos</div></div>
+      <div class="tbl-wrap">${contractsTable(CONTRACTS)}</div>
+    </div>`;
+  drawTimeline();
+}
+function contractsTable(list){
+  const s = STATE.sortContracts;
+  const sorted = [...list].sort((a,b)=> (s.key==='end'? a.end-b.end : (a[s.key]-b[s.key]))*s.dir);
+  const th=(key,label)=>`<th class="${s.key===key?'sorted':''}" onclick="sortContracts('${key}')">${label}${s.key===key?`<span class="arrow">${s.dir>0?'▲':'▼'}</span>`:''}</th>`;
+  return `<table><thead><tr><th>Contrato</th><th>Fornecedor</th>${th('value','Valor')}${th('end','Vencimento')}<th>Status</th></tr></thead>
+  <tbody>${sorted.map(ct=>{
+    const sp = SUPPLIERS.find(x=>x.id===ct.supplierId);
+    return `<tr class="clickable" onclick="go('contratos','${ct.id}')">
+      <td style="font-weight:600;">${ct.number}</td>
+      <td>${sp.name}</td>
+      <td class="num">${fmtMoney(ct.value)}</td>
+      <td>${fmtDate(ct.end)}</td>
+      <td>${statusBadge(ct)}</td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+function sortContracts(key){
+  const s = STATE.sortContracts;
+  s.dir = (s.key===key) ? -s.dir : 1;
+  s.key = key;
+  render();
+}
+function drawTimeline(){
+  const track = document.getElementById('timelineTrack');
+  if(!track) return;
+  const marks = [{label:'Hoje',d:0},{label:'15d',d:15},{label:'30d',d:30},{label:'60d',d:60},{label:'90d',d:90},{label:'180d',d:180},{label:'365d',d:365}];
+  const maxD = 365;
+  const pctOf = (d)=> Math.min(100, Math.max(0,(d/maxD)*100));
+  let html = '<div class="timeline-line"></div>';
+  marks.forEach(m=>{ html += `<div class="timeline-tick" style="left:${pctOf(m.d)}%;"><div class="pt"></div><div class="lbl">${m.label}</div></div>`; });
+  CONTRACTS.forEach(ct=>{
+    const d = daysToExpire(ct); const b = expireBucket(d);
+    const left = pctOf(Math.max(0,Math.min(maxD,d)));
+    const color = {red:'#C81E12',amber:'#B45B04',blue:'#0A6E94',green:'#12805C'}[b.color];
+    html += `<div class="contract-dot" title="${ct.number} · ${fmtDate(ct.end)}" style="left:${left}%; background:${color};" onclick="go('contratos','${ct.id}')"></div>`;
+  });
+  track.innerHTML = html;
+}
+
+/* ---------- Contrato detalhe ---------- */
+function renderContratoDetail(c, id){
+  const ct = CONTRACTS.find(x=>x.id===id);
+  if(!ct){ c.innerHTML = emptyState('Contrato não encontrado'); return; }
+  const sp = SUPPLIERS.find(x=>x.id===ct.supplierId);
+  setHeader(ct.number, 'Detalhe do contrato · '+sp.name);
+  const stages = ['Criação','Negociação','Assinatura','Vigência','Renovação'];
+  const d = daysToExpire(ct);
+  const activeStage = d<0 ? 4 : d<60 ? 4 : 3;
+  c.innerHTML = `
+    <div class="back-link" onclick="go('contratos')">← Voltar para Contratos</div>
+    <div class="detail-head">
+      <div><div class="entity-name">${ct.number} ${statusBadge(ct)}</div>
+      <div class="entity-meta">Fornecedor: <a onclick="go('fornecedores','${sp.id}')" style="font-weight:600;color:var(--ink);cursor:pointer;">${sp.name}</a> · Categoria Operações</div></div>
+    </div>
+    <div class="card panel" style="margin-bottom:14px;">
+      <div class="panel-title" style="margin-bottom:14px;">Ciclo de vida do contrato</div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        ${stages.map((st,i)=>`<div style="flex:1;text-align:center;">
+          <div style="width:24px;height:24px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+            background:${i<=activeStage?'var(--red)':'var(--gray-200)'}; color:${i<=activeStage?'#fff':'var(--gray-500)'};">${i+1}</div>
+          <div style="font-size:11.5px; color:${i<=activeStage?'var(--ink)':'var(--gray-500)'}; font-weight:${i<=activeStage?600:500};">${st}</div>
+        </div>${i<stages.length-1?`<div style="height:2px;flex:0.6;background:${i<activeStage?'var(--red)':'var(--gray-200)'};margin-bottom:20px;"></div>`:''}`).join('')}
+      </div>
+    </div>
+    <div class="row2">
+      <div class="card panel">
+        <div class="panel-title" style="margin-bottom:8px;">Informações do contrato</div>
+        <div class="two-col-list">
+          ${kv('Número', ct.number)} ${kv('Fornecedor', sp.name)}
+          ${kv('Categoria', 'Operações')} ${kv('Responsável', 'Você (Comprador)')}
+          ${kv('Início', fmtDate(ct.start))} ${kv('Término', fmtDate(ct.end))}
+          ${kv('Valor contratado', fmtMoneyFull(ct.value))} ${kv('Valor consumido', fmtMoneyFull(ct.consumed))}
+          ${kv('Saldo', fmtMoneyFull(ct.saldo))} ${kv('SLA', ct.sla+'%')}
+          ${kv('Índice de reajuste', ct.reajuste)} ${kv('Última negociação', fmtDate(ct.lastNegotiation))}
+        </div>
+      </div>
+      <div class="card panel">
+        <div class="panel-title" style="margin-bottom:8px;">Status de vencimento</div>
+        <div style="text-align:center; padding:20px 0;">
+          <div class="num" style="font-size:34px;font-weight:800;color:${d<0?'var(--danger)':d<30?'var(--danger)':d<90?'var(--warning)':'var(--success)'};">${d<0?('+'+Math.abs(d)):d}</div>
+          <div class="small-muted">${d<0?'dias em atraso':'dias até o vencimento'}</div>
+        </div>
+        ${statusBadge(ct)}
+      </div>
+    </div>
+  `;
+}
+function kv(k,v){ return `<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`; }
+
+/* ---------- Compras ---------- */
+function renderCompras(c){
+  setHeader('Compras', 'Histórico e acompanhamento de compras · 12 meses');
+  const sorted = [...PURCHASES].sort((a,b)=>b.date-a.date);
+  c.innerHTML = `
+    <div class="grid kpis" style="grid-template-columns:repeat(4,1fr); margin-bottom:14px;">
+      ${kpiCard('Compras no período', PURCHASES.length, null, '12 meses')}
+      ${kpiCard('Spend negociado', fmtMoney(PURCHASES.reduce((a,p)=>a+p.valueFinal,0)), null, '')}
+      ${kpiCard('Saving total', fmtMoney(PURCHASES.reduce((a,p)=>a+p.saving,0)), null, '')}
+      ${kpiCard('Saving %', fmtPct(PURCHASES.reduce((a,p)=>a+p.saving,0) / Math.max(1, PURCHASES.reduce((a,p)=>a+p.valueFinal,0)) * 100), null, 'saving total ÷ spend')}
+    </div>
+    <div class="card panel"><div class="tbl-wrap"><table><thead><tr>
+      <th>Data</th><th>Fornecedor</th><th>Valor inicial</th><th>Valor final</th><th>Saving</th><th>Tipo</th><th>Status</th>
+    </tr></thead><tbody>${sorted.map(p=>{
+      const sp = SUPPLIERS.find(x=>x.id===p.supplierId);
+      return `<tr class="clickable" onclick="go('fornecedores','${sp.id}')">
+        <td>${fmtDate(p.date)}</td><td>${sp.name}</td>
+        <td class="num">${fmtMoney(p.valueInicial)}</td><td class="num">${fmtMoney(p.valueFinal)}</td>
+        <td class="num" style="color:var(--success);">${fmtMoney(p.saving)} <span class="small-muted">(${fmtPct(p.savingPct)})</span></td>
+        <td>${p.negotiationType}</td><td><span class="badge green">${p.status}</span></td>
+      </tr>`;
+    }).join('')}</tbody></table></div></div>`;
+}
+
+/* ---------- Savings ---------- */
+function renderSavings(c){
+  setHeader('Savings', 'Gestão da economia gerada pela categoria');
+  const totalSaving = MONTHLY.reduce((a,m)=>a+m.saving,0);
+  const savingPct = TOTAL_SPEND > 0 ? (totalSaving / TOTAL_SPEND) * 100 : 0;
+  c.innerHTML = `
+    <div class="grid kpis" style="grid-template-columns:repeat(4,1fr); margin-bottom:14px;">
+      ${kpiCard('Saving acumulado', fmtMoney(totalSaving), null, '12 meses')}
+      ${kpiCard('Saving %', fmtPct(savingPct), null, 'saving total ÷ spend')}
+      ${kpiCard('Spend negociado', fmtMoney(TOTAL_SPEND), null, '')}
+      ${kpiCard('Nº de negociações', PURCHASES.length, null, fmtMoney(totalSaving/PURCHASES.length)+' saving médio')}
+    </div>
+    <div class="card panel">
+      <div class="panel-head">
+        <div><div class="panel-title">Saving por mês</div><div class="panel-sub">Últimos 12 meses</div></div>
+        <div class="seg" id="savSeg">
+          <button class="active" onclick="setSavingMode('valor')">Valor</button>
+          <button onclick="setSavingMode('pct')">Percentual</button>
+          <button onclick="setSavingMode('acum')">Acumulado</button>
+        </div>
+      </div>
+      <div class="chart-box" style="height:300px;"><canvas id="savingChart"></canvas></div>
+    </div>`;
+  drawSavingChart('valor');
+}
+function setSavingMode(mode){
+  document.querySelectorAll('#savSeg button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  drawSavingChart(mode);
+}
+function drawSavingChart(mode){
+  if(charts.saving) charts.saving.destroy();
+  let data, label, isPct=false;
+  if(mode==='valor'){ data = MONTHLY.map(m=>m.saving); label='Saving (R$)'; }
+  else if(mode==='pct'){ data = MONTHLY.map(m=>+m.pct.toFixed(1)); label='Saving (%)'; isPct=true; }
+  else { let acc=0; data = MONTHLY.map(m=>{acc+=m.saving; return acc;}); label='Saving acumulado (R$)'; }
+  charts.saving = new Chart(document.getElementById('savingChart'), {
+    type:'bar',
+    data:{labels:MONTHLY.map(m=>m.label), datasets:[{label, data, backgroundColor:'#F72717CC', borderRadius:5, maxBarThickness:22}]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:(ctx)=> isPct? ctx.raw+'%' : fmtMoneyFull(ctx.raw)}}},
+      scales:{x:{grid:{display:false}, offset:true}, y:{grid:{color:'#EEF0F3'}, ticks:{callback:v=> isPct? v+'%' : fmtMoney(v)}}},
+      categoryPercentage:.62,
+      barPercentage:.76
+    }
+  });
+}
+
+/* ---------- Performance ---------- */
+function renderPerformance(c){
+  setHeader('Performance', 'Portfólio do comprador · carteira gerenciada');
+  const totalSaving = PURCHASES.reduce((a,p)=>a+p.saving,0);
+  c.innerHTML = `
+    <div class="card panel" style="background:linear-gradient(135deg,var(--hero-a),var(--hero-b)); color:#fff; margin-bottom:14px; border:1px solid var(--sidebar-border);">
+      <div style="font-size:12px; color:#9AA0AE; margin-bottom:4px;">Carteira gerenciada</div>
+      <div style="font-size:30px; font-weight:800;" class="num">${fmtMoney(TOTAL_SPEND)}</div>
+      <div style="display:flex; gap:28px; margin-top:18px; flex-wrap:wrap;">
+        <div><div style="font-size:11px;color:#9AA0AE;">Saving gerado</div><div style="font-size:17px;font-weight:700;" class="num">${fmtMoney(totalSaving)}</div></div>
+        <div><div style="font-size:11px;color:#9AA0AE;">Saving %</div><div style="font-size:17px;font-weight:700;" class="num">${fmtPct(TOTAL_SPEND > 0 ? (totalSaving/TOTAL_SPEND)*100 : 0)}</div></div>
+        <div><div style="font-size:11px;color:#9AA0AE;">Fornecedores</div><div style="font-size:17px;font-weight:700;" class="num">${SUPPLIERS.length}</div></div>
+      </div>
+    </div>
+    <div class="card panel" style="margin-bottom:14px;">
+      <div class="panel-head centered"><div>
+        <div class="panel-title" style="margin-bottom:8px;">Negociações por tipo</div>
+      </div></div>
+      <div class="chart-box" style="height:220px;"><canvas id="negTypeChart"></canvas></div>
+    </div>
+    <div class="card panel">
+      <div class="panel-head centered"><div><div class="panel-title">Evolução do saving gerenciado</div><div class="panel-sub">Valores acumulados em R$ por período</div></div></div>
+      <div class="chart-box" style="height:260px; margin-top:8px;"><canvas id="perfEvo"></canvas></div>
+    </div>`;
+  const typeCounts = {};
+  PURCHASES.forEach(p=> typeCounts[p.negotiationType] = (typeCounts[p.negotiationType]||0)+1);
+  charts.negType = new Chart(document.getElementById('negTypeChart'), {
+    type:'doughnut',
+    data:{labels:Object.keys(typeCounts), datasets:[{data:Object.values(typeCounts), backgroundColor:['#F72717','#FF007D','#0A6E94','#B45B04','#12805C'], borderWidth:2, borderColor:'#fff'}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right', labels:{boxWidth:9, font:{size:10.5}}}}}
+  });
+  let acc=0;
+  const accData = MONTHLY.map(m=>{acc+=m.saving; return acc;});
+  charts.perfEvo = new Chart(document.getElementById('perfEvo'), {
+    type:'line',
+    data:{labels:MONTHLY.map(m=>m.label), datasets:[{label:'Saving acumulado', data:accData, borderColor:'#F72717', backgroundColor:'rgba(247,39,23,.1)', fill:true, tension:.35, pointRadius:3, pointBackgroundColor:'#F72717', pointBorderColor:'#fff', pointBorderWidth:2, borderWidth:2}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:(ctx)=>` Saving acumulado: ${fmtMoneyFull(ctx.raw)}`}}}, scales:{x:{grid:{display:false}},y:{grid:{color:'#EEF0F3'},ticks:{callback:v=>fmtMoney(v)}}}},
+    plugins:[{id:'savingValueLabels',afterDatasetsDraw(chart){
+      const meta=chart.getDatasetMeta(0); const context=chart.ctx;
+      context.save(); context.fillStyle='#7A2118'; context.font='600 10px Inter'; context.textAlign='center';
+      meta.data.forEach((point,index)=>{ const value=chart.data.datasets[0].data[index]; if(Number(value)>0) context.fillText(fmtMoney(value),point.x,point.y-9); });
+      context.restore();
+    }}]
+  });
+}
+
+/* ---------- Riscos ---------- */
+function renderRiscos(c){
+  setHeader('Riscos', 'Mapa de risco de fornecedores');
+  c.innerHTML = `
+    <div class="card panel" style="margin-bottom:14px;">
+      <div class="panel-head centered"><div><div class="panel-title">Matriz de Kraljic</div><div class="panel-sub">Impacto financeiro no eixo X e risco de fornecimento no eixo Y</div></div></div>
+      <div class="kraljic-legend"><span><i style="background:#D97706"></i>Gargalo</span><span><i style="background:#DC2626"></i>Estratégico</span><span><i style="background:#2563EB"></i>Alavancagem</span><span><i style="background:#64748B"></i>Não crítico</span></div>
+      <div class="chart-box" style="height:420px;"><canvas id="kraljicFull"></canvas></div>
+    </div>
+    <div class="card panel">
+      <div class="panel-head centered"><div><div class="panel-title">Fornecedores por score de risco</div><div class="panel-sub">Abra um fornecedor para registrar sua avaliação</div></div></div>
+      <div class="tbl-wrap" id="riskTableWrap"></div>
+    </div>`;
+  drawKraljic('kraljicFull');
+  renderRiskTable();
+}
+function renderWeights(){
+  const w = STATE.weights;
+  const labels = {financeiro:'Impacto financeiro', dependencia:'Dependência', substituibilidade:'Substitutibilidade', risco:'Risco operacional/contratual', performance:'Performance', concentracao:'Concentração'};
+  document.getElementById('weightsBox').innerHTML = Object.keys(w).map(k=>`
+    <div class="weights-row"><div class="lbl">${labels[k]}</div>
+      <input type="range" min="0" max="40" value="${w[k]}" oninput="updateWeight('${k}', this.value)">
+      <div class="wv num">${w[k]}</div></div>`).join('');
+}
+function updateWeight(key, val){
+  STATE.weights[key] = +val;
+  SUPPLIERS.forEach(s=> s.score = computeScore(s, STATE.weights));
+  renderWeights();
+  renderRiskTable();
+}
+function renderRiskTable(){
+  const wrap = document.getElementById('riskTableWrap');
+  if(!wrap) return;
+  const sorted = [...SUPPLIERS].sort((a,b)=>b.score-a.score);
+  wrap.innerHTML = `<table><thead><tr><th>Fornecedor</th><th>Classificação</th><th>Score</th><th>Nível</th></tr></thead>
+  <tbody>${sorted.map(s=>{ const r = riskLevel(s.score);
+    return `<tr class="clickable" onclick="go('fornecedores','${s.id}')"><td style="font-weight:600;">${s.name}</td>
+    <td><span class="badge ${classColor(s.status)}">${s.status}</span></td><td class="num">${s.score}</td>
+    <td><span class="badge ${r.color==='green'?'green':r.color}">${r.label}</span></td></tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+/* ---------- Placeholder ---------- */
+function renderSoon(c, page){
+  const titles = {relatorios:'Relatórios', config:'Configurações'};
+  setHeader(titles[page], 'Módulo em construção');
+  c.innerHTML = emptyState(`${titles[page]} entra na próxima fase do roadmap — hoje a prioridade é consolidar o MVP (Dashboard, Fornecedores, Contratos, Savings, Performance).`);
+}
+function emptyState(text){
+  return `<div class="card"><div class="empty-state"><div class="e-ico">${icon('circle-dashed')}</div><div>${text}</div></div></div>`;
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+render();
+loadData();
+window.setInterval(() => {
+  loadData({ manual: false });
+}, DATA_SOURCE_CONFIG.refreshIntervalMs);
+</script>
+</body>
+</html>
